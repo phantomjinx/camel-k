@@ -92,7 +92,11 @@ func main() {
 	// Filter un-interesting files
 	//
 	fs = filter.Skip(fs, filter.FilesWithExtensions(".go"))
+	fs = filter.Skip(fs, func(path string, fi os.FileInfo) bool {
+		return strings.HasSuffix(path, ".gen.yaml") || strings.HasSuffix(path, ".gen.json")
+	})
 	fs = filter.Skip(fs, NamedFilesFilter("kustomization.yaml"))
+	fs = filter.Skip(fs, NamedFilesFilter("Makefile"))
 	fs = filter.Skip(fs, NamedFilesFilter("auto-generated.txt"))
 	fs = filter.Skip(fs, func(path string, fi os.FileInfo) bool {
 		for _, ex := range exclusions {

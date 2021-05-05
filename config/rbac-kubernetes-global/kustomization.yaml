@@ -16,15 +16,26 @@
 # ---------------------------------------------------------------------------
 
 #
-# * patches/integration-platform-patch.yaml
-# customizes the integration platform custom resource
-# Edit the patch manually to add required configuration
+# Converts all roles and rolebindings in rbac-kubernetes with a 'can-promote'
+# annotation to ClusterRoles and ClusterRoleBindings
 #
+# Note.
+# The ClusterRoleBindings will be given the default 'placeholder' as
+# the namespace of the camel-k-operator service account.
+# Use `kustomize edit set namespace <namespace> to set the correct namespace
+#
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
 resources:
-- bases/camel_v1_integrationplatform.yaml
-- bases/camel_v1_integration.yaml
-- bases/camel_v1_integrationkit.yaml
-- bases/camel_v1_camelcatalog.yaml
-- bases/camel_v1_build.yaml
-- bases/camel_v1_kamelet.yaml
-- bases/camel_v1_kameletbinding.yaml
+- ../rbac-kubernetes
+
+patches:
+- path: ../rbac-patches/role-to-clusterrole-patch.yaml
+  target:
+    kind: Role
+    annotationSelector: can-promote=true
+- path: ../rbac-patches/rolebinding-to-clusterrolebinding-patch.yaml
+  target:
+    kind: RoleBinding
+    annotationSelector: can-promote=true

@@ -15,16 +15,23 @@
 # limitations under the License.
 # ---------------------------------------------------------------------------
 
-#
-# * patches/integration-platform-patch.yaml
-# customizes the integration platform custom resource
-# Edit the patch manually to add required configuration
-#
-resources:
-- bases/camel_v1_integrationplatform.yaml
-- bases/camel_v1_integration.yaml
-- bases/camel_v1_integrationkit.yaml
-- bases/camel_v1_camelcatalog.yaml
-- bases/camel_v1_build.yaml
-- bases/camel_v1_kamelet.yaml
-- bases/camel_v1_kameletbinding.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: camel-k-operator
+spec:
+  template:
+    spec:
+      containers:
+        - name: camel-k-operator
+          resources:
+            #
+            # Add custom requirements on hardware resource allocation
+            # for the operator deployment
+            #
+            requests:
+              # memory: "64Mi"
+              # cpu: "250m"
+            limits:
+              # memory: "128Mi"
+              # cpu: "500m"

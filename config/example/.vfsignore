@@ -15,16 +15,4 @@
 # limitations under the License.
 # ---------------------------------------------------------------------------
 
-#
-# * patches/integration-platform-patch.yaml
-# customizes the integration platform custom resource
-# Edit the patch manually to add required configuration
-#
-resources:
-- bases/camel_v1_integrationplatform.yaml
-- bases/camel_v1_integration.yaml
-- bases/camel_v1_integrationkit.yaml
-- bases/camel_v1_camelcatalog.yaml
-- bases/camel_v1_build.yaml
-- bases/camel_v1_kamelet.yaml
-- bases/camel_v1_kameletbinding.yaml
+# This dir and subdirs are not included in VFS

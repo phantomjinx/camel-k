@@ -14,7 +14,9 @@
 # limitations under the License.
 
 VERSIONFILE := pkg/util/defaults/defaults.go
-VERSION := 1.5.0-SNAPSHOT
+DEFAULT_VERSION := 1.5.0-SNAPSHOT
+# Allow version to be directly overridden
+VERSION ?= $(DEFAULT_VERSION)
 OPERATOR_VERSION := $(subst -SNAPSHOT,,$(VERSION))
 LAST_RELEASED_VERSION := 1.4.0
 RUNTIME_VERSION := 1.7.0
@@ -22,7 +24,9 @@ BUILDAH_VERSION := 1.14.0
 KANIKO_VERSION := 0.17.1
 BASE_IMAGE := adoptopenjdk/openjdk11:slim
 LOCAL_REPOSITORY := /tmp/artifacts/m2
-IMAGE_NAME := docker.io/apache/camel-k
+DEFAULT_IMAGE := docker.io/apache/camel-k
+# Allow image to be directly overridden
+IMAGE_NAME ?= $(DEFAULT_IMAGE)
 METADATA_IMAGE_NAME := $(IMAGE_NAME)-metadata
 RELEASE_GIT_REMOTE := upstream
 GIT_COMMIT := $(shell git rev-list -1 HEAD)
@@ -336,6 +340,11 @@ else
 CONTROLLER_GEN=$(shell which controller-gen)
 endif
 
+kubectl:
+ifeq (, $(shell which kubectl))
+$(error "No kubectl found in PATH. Please install and re-run")
+endif
+
 kustomize:
 ifeq (, $(shell which kustomize))
 	@{ \
@@ -343,7 +352,7 @@ ifeq (, $(shell which kustomize))
 	KUSTOMIZE_GEN_TMP_DIR=$$(mktemp -d) ;\
 	cd $$KUSTOMIZE_GEN_TMP_DIR ;\
 	go mod init tmp ;\
-	go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4 ;\
+	go get sigs.k8s.io/kustomize/kustomize/v4@v4.1.2 ;\
 	rm -rf $$KUSTOMIZE_GEN_TMP_DIR ;\
 	}
 KUSTOMIZE=$(GOBIN)/kustomize

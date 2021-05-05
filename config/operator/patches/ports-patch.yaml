@@ -15,16 +15,14 @@
 # limitations under the License.
 # ---------------------------------------------------------------------------
 
-#
-# * patches/integration-platform-patch.yaml
-# customizes the integration platform custom resource
-# Edit the patch manually to add required configuration
-#
-resources:
-- bases/camel_v1_integrationplatform.yaml
-- bases/camel_v1_integration.yaml
-- bases/camel_v1_integrationkit.yaml
-- bases/camel_v1_camelcatalog.yaml
-- bases/camel_v1_build.yaml
-- bases/camel_v1_kamelet.yaml
-- bases/camel_v1_kameletbinding.yaml
+- op: add
+  path: /spec/template/spec/containers/0/args
+  value:
+  - --monitoring-port=8080
+  - --health-port=8081
+- op: replace
+  path: /spec/template/spec/containers/0/ports/0/containerPort
+  value: 8080
+- op: replace
+  path: /spec/template/spec/containers/0/livenessProbe/httpGet/port
+  value: 8081

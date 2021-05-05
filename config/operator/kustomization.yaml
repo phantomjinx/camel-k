@@ -15,9 +15,37 @@
 # limitations under the License.
 # ---------------------------------------------------------------------------
 
+#
+# Add patches for modifying the deployment
+#
+# * patches/image-pull-policy-always-patch.yaml
+#   modifies the image pull policy property to "Always"
+#
+# * patches/monitoring-port-patch.yaml
+#   modifies the monitoring port
+#
+# * patches/health-port-patch.yaml
+#   modifies the health port
+#
+# * patches/watch-namespace-global-patch.yaml
+#   modifies the WATCH_NAMESPACE env var to wildcard for all namespaces
+#
+# * patches/toleration-patch.yaml
+#   modifies the tolerations configuraion of the deployment
+#   Edit the patch manually to add the required keys
+#
+# * patches/nodes-selector-patch.yaml
+#   modifies the nodeSelector configuration of the deployment
+#   to bind the deployment to a particular labelled group of nodes
+#   Edit the patch manually to add the required configuration
+#
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-- operator-deployment.yaml
-- operator-service-account.yaml
+- ../manager
+
+patchesStrategicMerge:
+- patches/toleration-patch.yaml
+- patches/node-selector-patch.yaml
+- patches/resource-requirements-patch.yaml

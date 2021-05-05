@@ -15,16 +15,21 @@
 # limitations under the License.
 # ---------------------------------------------------------------------------
 
-#
-# * patches/integration-platform-patch.yaml
-# customizes the integration platform custom resource
-# Edit the patch manually to add required configuration
-#
-resources:
-- bases/camel_v1_integrationplatform.yaml
-- bases/camel_v1_integration.yaml
-- bases/camel_v1_integrationkit.yaml
-- bases/camel_v1_camelcatalog.yaml
-- bases/camel_v1_build.yaml
-- bases/camel_v1_kamelet.yaml
-- bases/camel_v1_kameletbinding.yaml
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: camel-k-operator-strimzi
+  labels:
+    app: "camel-k"
+  annotations:
+    can-promote: "true"
+rules:
+- apiGroups:
+  - "kafka.strimzi.io"
+  resources:
+  - kafkatopics
+  - kafkas
+  verbs:
+  - get
+  - list
+  - watch
