@@ -963,12 +963,12 @@ func CreateOperatorRole(ns string) (err error) {
 	if err != nil {
 		panic(err)
 	}
-	err = install.Resource(TestContext, TestClient(), ns, true, install.IdentityResourceCustomizer, "/rbac/operator-role-kubernetes.yaml")
+	err = install.Resource(TestContext, TestClient(), ns, true, install.IdentityResourceCustomizer, "/rbac-kubernetes/operator-role-kubernetes.yaml")
 	if err != nil {
 		return err
 	}
 	if oc {
-		return install.Resource(TestContext, TestClient(), ns, true, install.IdentityResourceCustomizer, "/rbac/operator-role-openshift.yaml")
+		return install.Resource(TestContext, TestClient(), ns, true, install.IdentityResourceCustomizer, "/rbac-openshift/operator-role-openshift.yaml")
 	}
 	return nil
 }
@@ -978,12 +978,12 @@ func CreateOperatorRoleBinding(ns string) error {
 	if err != nil {
 		panic(err)
 	}
-	err = install.Resource(TestContext, TestClient(), ns, true, install.IdentityResourceCustomizer, "/rbac/operator-role-binding.yaml")
+	err = install.Resource(TestContext, TestClient(), ns, true, install.IdentityResourceCustomizer, "/rbac-kubernetes/operator-role-binding.yaml")
 	if err != nil {
 		return err
 	}
 	if oc {
-		return install.Resource(TestContext, TestClient(), ns, true, install.IdentityResourceCustomizer, "/rbac/operator-role-binding-openshift.yaml")
+		return install.Resource(TestContext, TestClient(), ns, true, install.IdentityResourceCustomizer, "/rbac-openshift/operator-role-binding-openshift.yaml")
 	}
 	return nil
 }

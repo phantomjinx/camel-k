@@ -14,9 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ---------------------------------------------------------------------------
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Labels to add to all resources and selectors.
+commonLabels:
+  app: camel-k
+
+# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
+# crd/kustomization.yaml
+#- ../webhook
+# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'. 'WEBHOOK' components are required.
+#- ../certmanager
+# [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
+#- ../prometheus
 
 resources:
-- ../default
+- ../manager
+- ../crd
+- ../prometheus
 - ../samples
 - ../scorecard
-- ./bases/camel-k.clusterserviceversion.yaml
+- ../rbac-kubernetes
+- ../rbac-openshift
