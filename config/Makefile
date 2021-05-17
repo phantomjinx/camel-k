@@ -133,7 +133,7 @@ endef
 # In this case if the user can list the CRDs then probably a cluster-admin
 #
 check-admin: kubectl
-	@output=$$(kubectl get crd 2>&1) || (echo "**** Cannot continue as user is not a Cluster-Admin ****"; exit 1)
+	@output=$$(kubectl get crd 2>&1) || (echo "****" && echo "**** ERROR: Cannot continue as user is not a Cluster-Admin ****" && echo "****"; exit 1)
 
 #
 # Modify the rbac-kubernetes resource definition depending on GLOBAL
@@ -187,7 +187,7 @@ else
 		sed 's/$(PLACEHOLDER)/$(NAMESPACE)/'
 endif
 
-.PHONY: operator .operator-port-patch
+.PHONY: operator .operator-port-patch .operator-can-monitor
 
 #
 # Customizes the port patch
@@ -197,6 +197,9 @@ endif
 	@sed -i '/path:.*\/containerPort/,/- op/{s/value: .*/value: $(MONITORING_PORT)/}' $(OP_PATCHES)/$(PORTS_PATCH).$(YAML)
 	@sed -i 's/--health-port=.*/--health-port=$(HEALTH_PORT)/' $(OP_PATCHES)/$(PORTS_PATCH).$(YAML)
 	@sed -i '/path:.*\/httpGet\/port/,/- op/{s/value: .*/value: $(HEALTH_PORT)/}' $(OP_PATCHES)/$(PORTS_PATCH).$(YAML)
+
+.operator-can-monitor: kubectl
+	@output=$$(kubectl get crd prometheusrules.monitoring.coreos.com 2>&1) || (echo "****" && echo "**** ERROR: Montoring not available as CRDs not installed in cluster ****" && echo "****"; exit 1)
 
 #
 # Install the operator deployment and related resources
@@ -215,10 +218,11 @@ endif
 #
 operator: kustomize kubectl .operator-port-patch
 ifeq ($(MONITORING), true)
-	#@ ****
-	#@ **** MONITORING requires a user with cluster-admin privileges ****
-	#@ ****
+	@echo "****"
+	@echo "**** MONITORING requires a user with cluster-admin privileges ****"
+	@echo "****"
 	@$(MAKE) -s check-admin
+	@$(MAKE) -s .operator-can-monitor
 	@$(call add-remove-operator-monitoring,$@,add)
 else
 	@$(call add-remove-operator-monitoring,$@,remove)

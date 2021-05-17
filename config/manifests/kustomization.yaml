@@ -21,19 +21,18 @@ kind: Kustomization
 commonLabels:
   app: camel-k
 
-# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
-# crd/kustomization.yaml
-#- ../webhook
-# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'. 'WEBHOOK' components are required.
-#- ../certmanager
-# [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'.
-#- ../prometheus
-
 resources:
 - ../manager
 - ../crd
-- ../prometheus
 - ../samples
 - ../scorecard
 - ../rbac-kubernetes
 - ../rbac-openshift
+
+#
+# Note:
+# Cannot include prometheus as PrometheusRule not valid on some kubernetes environments
+# such as Kind due to no CRD for monitoring.coreos.com/v1
+#
+# - ../prometheus
+#
