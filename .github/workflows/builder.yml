@@ -32,12 +32,6 @@ on:
     branches:
       - main
       - "release-*"
-    paths-ignore:
-      - 'proposals/**'
-      - '**.adoc'
-      - 'KEYS'
-      - 'LICENSE'
-      - 'NOTICE'
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -88,9 +82,11 @@ jobs:
     - name: Build Operator
       run: |
         echo "Build project"
-        export LOCAL_IMAGE=${KIND_REGISTRY}/apache/camel-k
-        echo "LOCAL_IMAGE=${LOCAL_IMAGE}:$(make get-version)" >> $GITHUB_ENV
-        make IMAGE_NAME=${LOCAL_IMAGE} PACKAGE_ARTIFACTS_STRATEGY=download build package-artifacts images images-push
+
+        export IMAGE_NAME=$KIND_REGISTRY/apache/camel-k
+        echo "LOCAL_IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
+        echo "LOCAL_IMAGE=${IMAGE_NAME}:$(make get-version)" >> $GITHUB_ENV
+        make PACKAGE_ARTIFACTS_STRATEGY=download build package-artifacts images images-push
 
         sudo mv ./kamel /usr/local/bin
     - name: Run IT
@@ -108,6 +104,7 @@ jobs:
         kamel install --cluster-setup
 
         # Configure install options
+        export IMAGE_NAME=${{ env.LOCAL_IMAGE_NAME }}
         export KAMEL_INSTALL_MAVEN_REPOSITORIES=$(make get-staging-repo)
         export KAMEL_INSTALL_REGISTRY=$KIND_REGISTRY
         export KAMEL_INSTALL_REGISTRY_INSECURE=true

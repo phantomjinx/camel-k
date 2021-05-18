@@ -73,11 +73,6 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.13.x
-    - name: Set up operator-sdk
-      run: |
-        curl -L https://github.com/operator-framework/operator-sdk/releases/download/v1.3.0/operator-sdk_linux_amd64 -o operator-sdk
-        chmod +x operator-sdk
-        sudo mv operator-sdk /usr/local/bin/
     - name: Set up opm tool
       run: |
         curl -L https://github.com/operator-framework/operator-registry/releases/download/v1.16.1/linux-amd64-opm -o opm
@@ -107,9 +102,10 @@ jobs:
     - name: Build Operator
       run: |
         echo "Build project"
-        export LOCAL_IMAGE=$KIND_REGISTRY/apache/camel-k
-        echo "LOCAL_IMAGE=${LOCAL_IMAGE}:$(make get-version)" >> $GITHUB_ENV
-        make IMAGE_NAME=${LOCAL_IMAGE} PACKAGE_ARTIFACTS_STRATEGY=download build package-artifacts images images-push
+        export IMAGE_NAME=$KIND_REGISTRY/apache/camel-k
+        echo "LOCAL_IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
+        echo "LOCAL_IMAGE=${IMAGE_NAME}:$(make get-version)" >> $GITHUB_ENV
+        make PACKAGE_ARTIFACTS_STRATEGY=download build package-artifacts images images-push
     - name: Build Operator bundle
       run: |
         echo "Build Operator bundle"
@@ -117,29 +113,10 @@ jobs:
         # reinstall kustomize to be always on the same version
         sudo rm $(which kustomize)
 
-        make kustomize
-
-        # replace image
-        $(cd config/manifests && kustomize edit set image "docker.io/apache/camel-k=${{ env.LOCAL_IMAGE }}")
-
-        # Patch CSV with the 'replaces' field to define the upgrade graph
-        cat <<EOF > config/manifests/patch.yml
-        apiVersion: operators.coreos.com/v1alpha1
-        kind: ClusterServiceVersion
-        metadata:
-          namespace: placeholder
-          name: camel-k.v$(make get-version | grep -Po "\d.\d.\d")
-        spec:
-          replaces: camel-k-operator.v$(make get-last-released-version)
-        EOF
-
-        echo "Patching CSV with"
-        cat config/manifests/patch.yml
-        $(cd config/manifests && kustomize edit add patch patch.yml)
-
+        export IMAGE_NAME=${{ env.LOCAL_IMAGE_NAME }}
         export LOCAL_IMAGE_BUNDLE=$KIND_REGISTRY/apache/camel-k-bundle:$(make get-version)
         echo "LOCAL_IMAGE_BUNDLE=${LOCAL_IMAGE_BUNDLE}" >> $GITHUB_ENV
-        make bundle-build METADATA_IMAGE_NAME=${LOCAL_IMAGE_BUNDLE} BUNDLE_METADATA_OPTS="--channels stable"
+        BUNDLE_IMAGE_NAME=${LOCAL_IMAGE_BUNDLE} DEFAULT_CHANNEL="stable" CHANNELS="stable" make bundle-build
         docker push ${LOCAL_IMAGE_BUNDLE}
     - name: Create new index image
       run: |
@@ -153,6 +130,7 @@ jobs:
         export RELEASED_KAMEL_BIN=/usr/local/bin/kamel
 
         # Configure install options
+        export IMAGE_NAME=${{ env.LOCAL_IMAGE_NAME }}
         export KAMEL_INSTALL_BUILD_PUBLISH_STRATEGY=Spectrum
         export KAMEL_INSTALL_MAVEN_REPOSITORIES=$(make get-staging-repo)
         export KAMEL_INSTALL_REGISTRY=$KIND_REGISTRY

@@ -40,7 +40,7 @@ func TestKitKnativeFullBuild(t *testing.T) {
 
 func doKitFullBuild(t *testing.T, name string, dependencies ...string) {
 	WithNewTestNamespace(t, func(ns string) {
-		Expect(Kamel("install", "-n", ns).Execute()).To(Succeed())
+		Expect(Kamel("install", "-n", ns, "--olm=false").Execute()).To(Succeed())
 		buildKitArgs := []string{"kit", "create", name, "-n", ns}
 		for _, dep := range dependencies {
 			buildKitArgs = append(buildKitArgs, "-d", dep)
