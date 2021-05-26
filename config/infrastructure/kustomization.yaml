@@ -24,7 +24,4 @@ kind: Kustomization
 
 resources:
 - deploy/builder-service-account.yaml
-- rbac/builder-role-binding-kubernetes.yaml
-- rbac/builder-role-kubernetes.yaml
-- rbac/builder-role-binding-openshift.yaml
-- rbac/builder-role-openshift.yaml
+- rbac/kubernetes

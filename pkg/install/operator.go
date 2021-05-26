@@ -283,7 +283,7 @@ func installOpenShiftClusterRoleConsoleBinding(ctx context.Context, c client.Cli
 	existing, err := c.RbacV1().ClusterRoleBindings().Get(ctx, "camel-k-operator-console-openshift", metav1.GetOptions{})
 	if k8serrors.IsNotFound(err) {
 		existing = nil
-		obj, err := kubernetes.LoadResourceFromYaml(c.GetScheme(), resources.ResourceAsString("/rbac-openshift/operator-cluster-role-console-binding-openshift.yaml"))
+		obj, err := kubernetes.LoadResourceFromYaml(c.GetScheme(), resources.ResourceAsString("/rbac/openshift-cluster/operator-cluster-role-console-binding-openshift.yaml"))
 		if err != nil {
 			return err
 		}
@@ -340,16 +340,16 @@ func installOpenShiftClusterRoleConsoleBinding(ctx context.Context, c client.Cli
 
 func installOpenShiftRoles(ctx context.Context, c client.Client, namespace string, customizer ResourceCustomizer, collection *kubernetes.Collection, force bool) error {
 	return ResourcesOrCollect(ctx, c, namespace, collection, force, customizer,
-		"/rbac-openshift/operator-role-openshift.yaml",
-		"/rbac-openshift/operator-role-binding-openshift.yaml",
+		"/rbac/openshift/operator-role-openshift.yaml",
+		"/rbac/openshift/operator-role-binding-openshift.yaml",
 	)
 }
 
 func installKubernetesRoles(ctx context.Context, c client.Client, namespace string, customizer ResourceCustomizer, collection *kubernetes.Collection, force bool) error {
 	return ResourcesOrCollect(ctx, c, namespace, collection, force, customizer,
 		"/manager/operator-service-account.yaml",
-		"/rbac-kubernetes/operator-role-kubernetes.yaml",
-		"/rbac-kubernetes/operator-role-binding.yaml",
+		"/rbac/kubernetes/operator-role-kubernetes.yaml",
+		"/rbac/kubernetes/operator-role-binding.yaml",
 	)
 }
 
@@ -361,29 +361,29 @@ func installOperator(ctx context.Context, c client.Client, namespace string, cus
 
 func installKnative(ctx context.Context, c client.Client, namespace string, customizer ResourceCustomizer, collection *kubernetes.Collection, force bool) error {
 	return ResourcesOrCollect(ctx, c, namespace, collection, force, customizer,
-		"/rbac-kubernetes/operator-role-knative.yaml",
-		"/rbac-kubernetes/operator-role-binding-knative.yaml",
+		"/rbac/kubernetes/operator-role-knative.yaml",
+		"/rbac/kubernetes/operator-role-binding-knative.yaml",
 	)
 }
 
 func installEvents(ctx context.Context, c client.Client, namespace string, customizer ResourceCustomizer, collection *kubernetes.Collection, force bool) error {
 	return ResourcesOrCollect(ctx, c, namespace, collection, force, customizer,
-		"/rbac-kubernetes/operator-role-events.yaml",
-		"/rbac-kubernetes/operator-role-binding-events.yaml",
+		"/rbac/kubernetes/operator-role-events.yaml",
+		"/rbac/kubernetes/operator-role-binding-events.yaml",
 	)
 }
 
 func installPodMonitors(ctx context.Context, c client.Client, namespace string, customizer ResourceCustomizer, collection *kubernetes.Collection, force bool) error {
 	return ResourcesOrCollect(ctx, c, namespace, collection, force, customizer,
-		"/rbac-kubernetes/operator-role-podmonitors.yaml",
-		"/rbac-kubernetes/operator-role-binding-podmonitors.yaml",
+		"/rbac/kubernetes/operator-role-podmonitors.yaml",
+		"/rbac/kubernetes/operator-role-binding-podmonitors.yaml",
 	)
 }
 
 func installStrimziBindings(ctx context.Context, c client.Client, namespace string, customizer ResourceCustomizer, collection *kubernetes.Collection, force bool) error {
 	return ResourcesOrCollect(ctx, c, namespace, collection, force, customizer,
-		"/rbac-kubernetes/operator-role-strimzi.yaml",
-		"/rbac-kubernetes/operator-role-binding-strimzi.yaml",
+		"/rbac/kubernetes/operator-role-strimzi.yaml",
+		"/rbac/kubernetes/operator-role-binding-strimzi.yaml",
 	)
 }
 
@@ -396,15 +396,15 @@ func installMonitoringResources(ctx context.Context, c client.Client, namespace 
 
 func installLeaseBindings(ctx context.Context, c client.Client, namespace string, customizer ResourceCustomizer, collection *kubernetes.Collection, force bool) error {
 	return ResourcesOrCollect(ctx, c, namespace, collection, force, customizer,
-		"/rbac-kubernetes/operator-role-leases.yaml",
-		"/rbac-kubernetes/operator-role-binding-leases.yaml",
+		"/rbac/kubernetes/operator-role-leases.yaml",
+		"/rbac/kubernetes/operator-role-binding-leases.yaml",
 	)
 }
 
 func installServiceBindings(ctx context.Context, c client.Client, namespace string, customizer ResourceCustomizer, collection *kubernetes.Collection, force bool) error {
 	return ResourcesOrCollect(ctx, c, namespace, collection, force, customizer,
-		"/rbac-kubernetes/operator-role-service-binding.yaml",
-		"/rbac-kubernetes/operator-role-binding-service-binding.yaml",
+		"/rbac/kubernetes/operator-role-service-binding.yaml",
+		"/rbac/kubernetes/operator-role-binding-service-binding.yaml",
 	)
 }
 

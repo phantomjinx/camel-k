@@ -56,9 +56,11 @@ HEALTH_PORT ?= 8081
 #
 PLATFORM ?= $(shell script/platform_check.sh)
 
-RBAC_KUBE := rbac-kubernetes
-RBAC_OS := rbac-openshift
+RBAC_KUBE := rbac/kubernetes
+RBAC_OS := rbac/openshift
+RBAC_CLUSTER := cluster
 RBAC_GLOBAL := global
+INFRASTRUCTURE := infrastructure
 YAML := yaml
 
 OP_PATCHES := ./operator/patches
@@ -126,7 +128,23 @@ define add-remove-operator-monitoring
 		$(KUSTOMIZE) edit $(2) resource ../prometheus
 endef
 
-.PHONY: check_admin .setup-kubernetes .setup-openshift setup
+.PHONY: check-platform check_admin setup-cluster .setup-kubernetes .setup-openshift setup
+
+#
+# Checks if the cluster platform has been defined correctly either by the user
+# or by the platform_check script.
+#
+check-platform:
+ifeq ($(PLATFORM),openshift)
+	@echo Platform identified as 'openshift'
+else ifeq ($(PLATFORM),kubernetes)
+	@echo Platform identified as 'kubernetes'
+else
+	@echo "****"
+	@echo "**** ERROR: Cannot continue as cluster platform cannot be identified ****"
+	@echo "****"
+	@exit 1
+endif
 
 #
 # Checks if the cluster user has the necessary privileges to be a cluster-admin
@@ -136,41 +154,87 @@ check-admin: kubectl
 	@output=$$(kubectl get crd 2>&1) || (echo "****" && echo "**** ERROR: Cannot continue as user is not a Cluster-Admin ****" && echo "****"; exit 1)
 
 #
-# Modify the rbac-kubernetes resource definition depending on GLOBAL
+# Setup the cluster installation by installing crds and cluster roles.
+#
+# Will either call setup-cluster-openshift (then setup-cluster-kubernetes) or
+# setup-cluster-kubernetes depending on the identity of the cluster
+#
+# PARAMETERS:
+#   NAMESPACE: Sets the namespace for the resources
+#   PLATFORM:  Override the discovered platform, if required
+#   DEBUG:     true - Prints the resources to be applied instead of applying them
+#
+setup-cluster: check-platform kustomize kubectl check-admin
+# Set the namespace in the setup-cluster kustomization yaml
+	@$(call set-kustomize-namespace,$@)
+#
+#
+ifeq ($(PLATFORM), openshift)
+	@cd $@ && $(KUSTOMIZE) edit add resource ../$(RBAC_OS)-$(RBAC_CLUSTER)
+endif
+#
+# Build the resources
+# Post-process ClusterRoleBindings to fix the namespace in the refs (not yet handled by kustomize)
+# Either apply to the cluster or output to CLI
+#
+ifeq ($(DEBUG), false)
+	@$(KUSTOMIZE) build $(KOPTIONS) $@ | \
+		sed 's/$(PLACEHOLDER)/$(NAMESPACE)/' | \
+		kubectl apply -f -
+else
+	@$(KUSTOMIZE) build $(KOPTIONS) $@ | \
+		sed 's/$(PLACEHOLDER)/$(NAMESPACE)/'
+endif
+
+#
+# Modify the rbac/kubernetes resource definition depending on GLOBAL
 #
 .setup-kubernetes:
-# Resets back to default by removing any reference to rbac-openshift
-	@cd setup && $(KUSTOMIZE) edit remove resource ../$(RBAC_OS)
+# Resets back to default by removing any reference to rbac/openshift
+	@cd setup && \
+		$(KUSTOMIZE) edit remove resource ../$(RBAC_OS) && \
+		$(KUSTOMIZE) edit remove resource ../$(RBAC_OS)-$(RBAC_GLOBAL)
 ifeq ($(GLOBAL),true)
+	@echo "****"
+	@echo "**** GLOBAL requires a user with cluster-admin privileges ****"
+	@echo "****"
+	@$(MAKE) -s check-admin
 	@$(call swap-rbac,setup,"$(RBAC_KUBE)","$(RBAC_KUBE)-$(RBAC_GLOBAL)")
 else
 	@$(call swap-rbac,setup,"$(RBAC_KUBE)-$(RBAC_GLOBAL)","$(RBAC_KUBE)")
 endif
 
 #
-# Modify the rbac-openshift resource definition depending on GLOBAL
+# Add in the rbac role designated in infrastructure
+# Modify the rbac/openshift resource definition depending on GLOBAL
 #
 .setup-openshift: .setup-kubernetes
+	@cd $(INFRASTRUCTURE) && $(KUSTOMIZE) edit add resource $(RBAC_OS)
 ifeq ($(GLOBAL),true)
+	@echo "****"
+	@echo "**** GLOBAL requires a user with cluster-admin privileges ****"
+	@echo "****"
+	@$(MAKE) -s check-admin
 	@$(call swap-rbac,setup,"$(RBAC_OS)","$(RBAC_OS)-$(RBAC_GLOBAL)")
 else
 	@$(call swap-rbac,setup,"$(RBAC_OS)-$(RBAC_GLOBAL)","$(RBAC_OS)")
 endif
 
 #
-# Setup the installation by installing crds, roles and granting
-# privileges for the installing user.
-#
-# Will either call setup-openshift (then setup-kubernetes) or
-# setup-kubernetes depending on the identity of the cluster
+# Setup the installation by installing roles and granting
+# privileges for the installing operator. Although a cluster-admin
+# is not required a suitably privieged user is in order to create all
+# the required namespace roles.
 #
 # PARAMETERS:
 #   NAMESPACE: Sets the namespace for the resources
-#   GLOBAL:    Converts all roles & bindings to cluster-level
+#   GLOBAL:    Converts all roles & bindings to cluster-level (requires cluster-admin privileges)
 #   PLATFORM:  Override the discovered platform, if required
 #   DEBUG:     true - Prints the resources to be applied instead of applying them
 #
-setup: kustomize kubectl check-admin .setup-$(PLATFORM)
+setup: check-platform kustomize kubectl
+# Cannot be a dependency as PLATFORM could contain 'ERROR: '
+	@$(MAKE) .setup-$(PLATFORM)
 # Set the namespace in the setup kustomization yaml
 	@$(call set-kustomize-namespace,$@)
 #
@@ -214,9 +278,9 @@ endif
 #   IMAGE_PULL_POLICY: Sets whether to always pull the operator image
 #   MONITORING_PORT:   Set a custom monitoring port
 #   HEALTH_PORT:       Set a custom health port
-#   DEBUG:     true - Prints the resources to be applied instead of applying them
+#   DEBUG:             Prints the resources to be applied instead of applying them
 #
-operator: kustomize kubectl .operator-port-patch
+operator: check-platform kustomize kubectl .operator-port-patch
 ifeq ($(MONITORING), true)
 	@echo "****"
 	@echo "**** MONITORING requires a user with cluster-admin privileges ****"
@@ -277,7 +341,9 @@ endif
 #   PLATFORM:  Override the discovered platform, if required
 #   DEBUG:     true - Prints the resources to be applied instead of applying them
 #
-platform: kustomize kubectl .platform-$(PLATFORM)-patch
+platform: check-platform kustomize kubectl
+# Cannot be a dependency as PLATFORM could contain 'ERROR: '
+	@$(MAKE) .platform-$(PLATFORM)-patch
 # Set the namespace in the setup kustomization yaml
 	@$(call set-kustomize-namespace,$@)
 ifeq ($(DEBUG), false)
