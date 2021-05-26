@@ -14,27 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ---------------------------------------------------------------------------
+
+#
+# Resources applicable to installed application components (operands) rather
+# than for the running of the operator
+#
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Labels to add to all resources and selectors.
-commonLabels:
-  app: camel-k
-
 resources:
-- ../manager
-- ../crd
-- ../samples
-- ../scorecard
-- ../rbac/kubernetes-cluster
-- ../rbac/openshift-cluster
-- ../rbac/kubernetes
-- ../rbac/openshift
-
-#
-# Note:
-# Cannot include prometheus as PrometheusRule not valid on some kubernetes environments
-# such as Kind due to no CRD for monitoring.coreos.com/v1
-#
-# - ../prometheus
-#
+- builder-role-binding-kubernetes.yaml
+- builder-role-kubernetes.yaml
