@@ -28,10 +28,6 @@ on:
       - 'KEYS'
       - 'LICENSE'
       - 'NOTICE'
-  push:
-    branches:
-      - main
-      - "release-*"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}

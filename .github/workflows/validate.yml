@@ -17,12 +17,8 @@
 
 name: validate
 
-on: 
+on:
   pull_request:
-    branches: 
-      - main
-      - "release-*"
-  push:
     branches:
       - main
       - "release-*"
