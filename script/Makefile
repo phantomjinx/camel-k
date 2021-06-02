@@ -172,6 +172,10 @@ test-integration: set-version build
 	go test -timeout 60m -v ./e2e/common/languages -tags=integration && \
 	go test -timeout 60m -v ./e2e/common/traits -tags=integration
 
+test-kustomize: set-version build
+	STAGING_RUNTIME_REPO="$(STAGING_RUNTIME_REPO)" \
+	go test -timeout 60m -v ./e2e/common/kustomize -tags=integration
+
 test-knative: set-version build
 	STAGING_RUNTIME_REPO="$(STAGING_RUNTIME_REPO)" go test -timeout 60m -v ./e2e/knative -tags=integration
 	#go test -timeout 60m -v ./e2e/knative -tags=integration
