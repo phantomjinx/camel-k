@@ -50,12 +50,6 @@ MONITORING_PORT ?= 8080
 # Health Port: integer
 HEALTH_PORT ?= 8081
 
-#
-# Determine the platform of the cluster based
-# on connection to it from the installed client
-#
-PLATFORM ?= $(shell script/platform_check.sh)
-
 RBAC_KUBE := rbac/kubernetes
 RBAC_OS := rbac/openshift
 RBAC_CLUSTER := cluster
@@ -128,13 +122,23 @@ define add-remove-operator-monitoring
 		$(KUSTOMIZE) edit $(2) resource ../prometheus
 endef
 
-.PHONY: check-platform check_admin setup-cluster .setup-kubernetes .setup-openshift setup
+.PHONY: have-platform check_admin setup-cluster .setup-kubernetes .setup-openshift setup
+
+#
+# Determine the platform of the cluster based on
+# either the use of querying through a go-client
+# or using an installed client, ie. oc or kubectl
+#
+find-platform:
+ifndef PLATFORM
+PLATFORM=$(shell script/check_platform.sh)
+endif
 
 #
 # Checks if the cluster platform has been defined correctly either by the user
 # or by the platform_check script.
 #
-check-platform:
+have-platform: find-platform
 ifeq ($(PLATFORM),openshift)
 	@echo Platform identified as 'openshift'
 else ifeq ($(PLATFORM),kubernetes)
@@ -164,7 +168,7 @@ check-admin: kubectl
 #   PLATFORM:  Override the discovered platform, if required
 #   DEBUG:     true - Prints the resources to be applied instead of applying them
 #
-setup-cluster: check-platform kustomize kubectl check-admin
+setup-cluster: have-platform kustomize kubectl check-admin
 # Set the namespace in the setup-cluster kustomization yaml
 	@$(call set-kustomize-namespace,$@)
 #
@@ -232,7 +236,7 @@ endif
 #   PLATFORM:  Override the discovered platform, if required
 #   DEBUG:     true - Prints the resources to be applied instead of applying them
 #
-setup: check-platform kustomize kubectl
+setup: have-platform kustomize kubectl
 # Cannot be a dependency as PLATFORM could contain 'ERROR: '
 	@$(MAKE) .setup-$(PLATFORM)
 # Set the namespace in the setup kustomization yaml
@@ -280,7 +284,7 @@ endif
 #   HEALTH_PORT:       Set a custom health port
 #   DEBUG:             Prints the resources to be applied instead of applying them
 #
-operator: check-platform kustomize kubectl .operator-port-patch
+operator: have-platform kustomize kubectl .operator-port-patch
 ifeq ($(MONITORING), true)
 	@echo "****"
 	@echo "**** MONITORING requires a user with cluster-admin privileges ****"
@@ -341,7 +345,7 @@ endif
 #   PLATFORM:  Override the discovered platform, if required
 #   DEBUG:     true - Prints the resources to be applied instead of applying them
 #
-platform: check-platform kustomize kubectl
+platform: have-platform kustomize kubectl
 # Cannot be a dependency as PLATFORM could contain 'ERROR: '
 	@$(MAKE) .platform-$(PLATFORM)-patch
 # Set the namespace in the setup kustomization yaml

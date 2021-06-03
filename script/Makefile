@@ -255,6 +255,9 @@ lint-fix:
 check-licenses:
 	./script/check_licenses.sh
 
+check-platform:
+	./script/check_platform.sh
+
 maven-overlay:
 	mkdir -p build/_maven_overlay
 	./script/maven_overlay.sh build/_maven_overlay
