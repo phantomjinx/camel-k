@@ -4,6 +4,7 @@
 # Binary files
 /kamel
 /license-check
+/**/platform-check
 
 # Config files
 /kamel-config.yaml

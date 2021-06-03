@@ -22,7 +22,7 @@
 .PHONY: $(SUBDIRS)
 
 INSTALLDIR := $(RELEASE_NAME)-installer
-RELEASEDIRS := ../crd ../example ../infrastructure ../manager ../operator ../platform ../prometheus ../rbac ../samples ../../script ../setup ../setup-cluster
+RELEASEDIRS := ../crd ../example ../infrastructure ../manager ../operator ../platform ../prometheus ../rbac ../samples ../setup ../setup-cluster
 
 default: release
 
@@ -36,15 +36,22 @@ endif
 
 create:
 	#@ Make a new build directory
-	mkdir -p $(INSTALLDIR)
+	@mkdir -p $(INSTALLDIR)
 	#@ Copy directories into build directory
-	for dir in $(RELEASEDIRS); do \
+	@for dir in $(RELEASEDIRS); do \
 		cp -rf $$dir $(INSTALLDIR)/; \
 	done
-	cp -rf ../Makefile $(INSTALLDIR)/
+	#@ Copy config/Makefile
+	@cp -rf ../Makefile $(INSTALLDIR)/
+	#@ Copy the platform-check go source since its built and run during install
+	@mkdir -p $(INSTALLDIR)/cmd/util && cp -rf ../../cmd/util/platform-check $(INSTALLDIR)/cmd/util/
+	#@ Copy the script files needed
+	@mkdir -p $(INSTALLDIR)/script && \
+	  cp ../../script/Makefile $(INSTALLDIR)/script/ && \
+		cp ../../script/check_platform.sh $(INSTALLDIR)/script/
 
 release: check-vars create
-	tar zcvf $(INSTALLDIR)-$(RELEASE_VERSION).tar.gz $(INSTALLDIR)
+	@tar zcvf $(INSTALLDIR)-$(RELEASE_VERSION).tar.gz $(INSTALLDIR)
 
 clean:
-	rm -rf *-installer *.tar.gz
+	@rm -rf *-installer *.tar.gz
